@@ -21,21 +21,6 @@ def save_event(data):
     
     collection.insert_one(data)
 
-@webhook.route("/health/db", methods=["GET"])
-def db_health():
-    try:
-        # Forces connection
-        mongo.db.command("ping")
-        return jsonify({
-            "db": "connected",
-            "database": mongo.db.name
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "db": "failed",
-            "error": str(e)
-        }), 500
-
 @webhook.route("/")
 def home():
     return "The Flask API is UP! Maintained and Developed by SHUBHAM."
@@ -68,9 +53,13 @@ def github_webhook():
 
         # PR
         elif event_type == "pull_request":
+
             pr = payload["pull_request"]
-            is_merged = pr["merged"]
-            action = "MERGED" if is_merged else "PULL_REQUEST"
+            pr_action = payload["action"]
+
+            is_merged = pr_action == "closed" and pr["merged"] is True
+
+            action = "MERGE" if is_merged else "PULL_REQUEST"
 
             data = {
                 "request_id": str(pr["id"]),
@@ -78,8 +67,9 @@ def github_webhook():
                 "action": action,
                 "from_branch": pr["head"]["ref"],
                 "to_branch": pr["base"]["ref"],
-                "timestamp": pr["created_at"]
+                "timestamp": pr["merged_at"] if is_merged else pr["created_at"]
             }
+
             save_event(data)
         
         else:
@@ -104,4 +94,4 @@ def get_events():
         mongo.db.events.find(query, {"_id": 0}).sort("timestamp", -1).limit(20)
     )
 
-    return jsonifyify(events)
+    return jsonify(events)
