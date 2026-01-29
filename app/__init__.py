@@ -14,7 +14,7 @@ from app.webhook.routes import webhook
 # Creating our flask app
 def create_app():
 
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="templates", static_folder="static")
 
     # Enable CORS
     CORS(app)

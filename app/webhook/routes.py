@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, render_template
 from datetime import datetime, timezone
 from app.webhook import webhook
 from app.extensions import mongo
@@ -21,9 +21,9 @@ def save_event(data):
     
     collection.insert_one(data)
 
-@webhook.route("/")
+@webhook.route("/", methods=["GET"])
 def home():
-    return "The Flask API is UP! Maintained and Developed by SHUBHAM."
+    return render_template("index.html")
 
 # ------------------
 # Webhook Receiver
